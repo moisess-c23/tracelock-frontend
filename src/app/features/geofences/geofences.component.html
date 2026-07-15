@@ -1,0 +1,327 @@
+<div class="geofences-viewport" (click)="selectedFence.set(null)">
+  <header class="section-banner" (click)="$event.stopPropagation()">
+    <div class="banner-title">
+      <div class="page-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      </div>
+      <div>
+        <h2>Perímetros Logísticos</h2>
+        <p>Configure geocercas circulares o poligonales para control de arribos e incidentes.</p>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" (click)="openCreateModal(); $event.stopPropagation()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Nueva Geocerca
+    </button>
+  </header>
+
+  <div class="geofences-layout">
+    <div class="table-column">
+      <div class="table-container">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Nombre / Descripción</th>
+              <th>Medidas / Área</th>
+              <th>Estado</th>
+              <th>Firma Color</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (fence of geofences(); track fence.id) {
+              <tr [class.selected]="selectedFence()?.id === fence.id" (click)="selectFence(fence); $event.stopPropagation()">
+                <td>
+                  <div class="fence-info">
+                    <strong>{{ fence.name }}</strong>
+                    <span>{{ fence.description || 'Sin descripción' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="font-mono area-metric">
+                    @if (fence.type === 'circle') {
+                      R: {{ fence.radius }}m
+                    } @else {
+                      {{ fence.coordinates?.length || fence.geometry?.coordinates?.[0]?.length || 0 }} Vértices
+                    }
+                  </span>
+                </td>
+                <td>
+                  <button class="toggle-btn"
+                          [class.active]="fence.isActive"
+                          (click)="toggleActive(fence); $event.stopPropagation()">
+                    <span class="toggle-thumb"></span>
+                  </button>
+                </td>
+                <td>
+                  <div class="color-preview-box">
+                    <span class="color-dot" [ngStyle]="{'background-color': fence.color, 'box-shadow': '0 0 8px ' + fence.color}"></span>
+                    <span class="font-mono hex-label">{{ fence.color }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="actions-group">
+                    <button class="btn-action edit" (click)="openEditModal(fence); $event.stopPropagation()" title="Editar">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button class="btn-action delete" (click)="deleteFence(fence.id); $event.stopPropagation()" title="Eliminar">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="empty-row">No hay geocercas configuradas. Presioná "Nueva Geocerca" para iniciar.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="preview-panel" (click)="$event.stopPropagation()">
+      <div class="panel-header">
+        <h3>Previsualización</h3>
+        @if (selectedFence()) {
+          <span class="active-title">{{ selectedFence()!.name }}</span>
+        }
+      </div>
+
+      @if (selectedFence()) {
+        <div class="preview-canvas-wrap">
+          <div class="canvas-color-strip" [style.background]="selectedFence()!.color"></div>
+          <svg viewBox="0 0 100 100" class="preview-svg">
+            <defs>
+              <pattern id="miniGrid" width="8" height="8" patternUnits="userSpaceOnUse">
+                <path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.4"/>
+              </pattern>
+            </defs>
+            <rect width="100" height="100" fill="url(#miniGrid)" />
+            <path d="M-10,40 Q25,50 55,68 T110,80" fill="none" stroke="rgba(59,130,246,0.12)" stroke-width="5" stroke-linecap="round"/>
+            <path d="M0,50 L100,50" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <path d="M50,0 L50,100" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+            @if (selectedFence()!.type === 'circle') {
+              <circle [attr.cx]="lngToX(getFirstCoordinate(selectedFence())?.lng)"
+                      [attr.cy]="latToY(getFirstCoordinate(selectedFence())?.lat)"
+                      [attr.r]="radiusToSVG(selectedFence()!.radius || 400)"
+                      [attr.fill]="selectedFence()!.color"
+                      fill-opacity="0.18"
+                      [attr.stroke]="selectedFence()!.color"
+                      stroke-width="1.5"
+                      class="glowing-node" />
+            } @else {
+              <polygon [attr.points]="getPolygonPoints(getFenceCoordinates(selectedFence()))"
+                       [attr.fill]="selectedFence()!.color"
+                       fill-opacity="0.18"
+                       [attr.stroke]="selectedFence()!.color"
+                       stroke-width="1.5"
+                       class="glowing-node" />
+            }
+          </svg>
+          <div class="radar-scan"></div>
+
+          <div class="canvas-type-badge">
+            <span class="fence-dot" [style.background]="selectedFence()!.color"></span>
+            {{ selectedFence()!.type === 'circle' ? 'Circular' : 'Poligonal' }}
+          </div>
+        </div>
+
+        <div class="preview-details">
+          <div class="detail-row">
+            <div class="detail-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div class="detail-content">
+              <span class="detail-label">Coordenadas</span>
+              @if (getFirstCoordinate(selectedFence())) {
+                <span class="detail-value font-mono">
+                  {{ getFirstCoordinate(selectedFence())?.lat | number:'1.4-4' }}N,
+                  {{ getFirstCoordinate(selectedFence())?.lng | number:'1.4-4' }}W
+                </span>
+              } @else {
+                <span class="detail-value">N/A</span>
+              }
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10"/>
+              </svg>
+            </div>
+            <div class="detail-content">
+              <span class="detail-label">Unidades vinculadas</span>
+              <span class="detail-value">{{ selectedFence()!.vehicleIds.length }} vehículo{{ selectedFence()!.vehicleIds.length !== 1 ? 's' : '' }}</span>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <div class="detail-content">
+              <span class="detail-label">Tipo de zona</span>
+              <span class="detail-value">{{ selectedFence()!.zoneType === 'forbidden' ? 'Prohibida' : 'Permitida' }}</span>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            <div class="detail-content">
+              <span class="detail-label">Severidad</span>
+              <span class="detail-value severity-{{ selectedFence()!.severity || 'low' }}">
+                {{ selectedFence()!.severity === 'critical' ? 'Crítica' : selectedFence()!.severity === 'medium' ? 'Media' : 'Baja' }}
+              </span>
+            </div>
+          </div>
+
+          @if (selectedFence()!.description) {
+            <div class="detail-description">
+              <span class="detail-label">Descripción</span>
+              <p>{{ selectedFence()!.description }}</p>
+            </div>
+          }
+        </div>
+
+      } @else {
+        <div class="select-hint">
+          <div class="hint-icon-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <p>Seleccioná una geocerca de la tabla para visualizar su área y detalles de configuración.</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (isModalOpen()) {
+    <div class="modal-backdrop">
+      <div class="modal-card" [class.modal-expanded]="isModalExpanded()">
+        <div class="modal-header">
+          <h3>{{ isEditMode() ? 'Editar Perímetro Geográfico' : 'Configurar Perímetro Geográfico' }}</h3>
+          <div class="modal-header-actions">
+            <button class="btn-expand" (click)="toggleModalExpand()" [title]="isModalExpanded() ? 'Restaurar tamaño' : 'Pantalla completa'">
+              @if (isModalExpanded()) {
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15v4.5M15 15h4.5M15 15l5.25 5.25M9 15H4.5M9 15v4.5M9 15l-5.25 5.25"/></svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+              }
+            </button>
+            <button class="btn-close" (click)="closeModal()">&times;</button>
+          </div>
+        </div>
+        
+        <form [formGroup]="geofenceForm" (ngSubmit)="onSubmit()" class="modal-form-body">
+          <div class="form-group">
+            <label>Nombre del Sector</label>
+            <input type="text" formControlName="name" class="input-control" placeholder="Ej: Zona Norte Puerto o Sector A2">
+            @if (geofenceForm.get('name')?.touched && geofenceForm.get('name')?.invalid) {
+              <span class="error-msg">El nombre es requerido (mínimo 3 caracteres).</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label>Descripción Operativa</label>
+            <textarea formControlName="description" class="input-control text-area" placeholder="Detalle las restricciones o alertas asociadas a esta zona..." rows="2"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Firma de Color (Faro)</label>
+            <select formControlName="color" class="input-control select-control" (change)="updateDrawingColor()">
+              <option value="#10b981">Esmeralda Activo (Seguro)</option>
+              <option value="#3b82f6">Cobalto Operativo (Servicio)</option>
+              <option value="#ef4444">Faro Crimson (Restringido)</option>
+              <option value="#f59e0b">Faro Ámbar (Precaución)</option>
+              <option value="#8b5cf6">Faro Púrpura (Especial)</option>
+            </select>
+          </div>
+
+          <div class="form-grid" style="margin-top: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+              <label>Tipo de Zona</label>
+              <select formControlName="zoneType" class="input-control select-control">
+                <option value="permitted">Permitida (Acceso Libre)</option>
+                <option value="forbidden">Prohibida (Restringida)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Nivel de Severidad</label>
+              <select formControlName="severity" class="input-control select-control">
+                <option value="low">Severidad Baja (Reporte)</option>
+                <option value="medium">Severidad Media (Alarma)</option>
+                <option value="critical">Severidad Crítica (Incidente)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-assignments" style="margin-top: 1.25rem;">
+            <label class="section-lbl">Trazar Área de Geocerca (Polígono Irregular)</label>
+            <p style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.5rem; line-height: 1.35;">
+              Haga clics consecutivos en el mapa de abajo para inyectar los vértices. El polígono se cerrará reactivamente de acuerdo al faro de color.
+            </p>
+            
+            <div id="geofence-draw-map" style="height: 240px; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; background: var(--bg-card); z-index: 5;"></div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.65rem;">
+              <span style="font-size: 0.78rem; color: var(--text-secondary);">
+                Vértices trazados: <strong class="font-mono text-cyan" style="background: rgba(0,0,0,0.2); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-color);">{{ drawPoints.length }}</strong>
+              </span>
+              <button type="button" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.3rem 0.75rem;" (click)="clearDrawing()">
+                Limpiar Dibujo
+              </button>
+            </div>
+            
+            @if (geofenceForm.get('coordinates')?.invalid && geofenceForm.get('coordinates')?.touched) {
+              <span class="error-msg" style="margin-top: 0.5rem;">Debe trazar al menos 3 vértices en el mapa para constituir una geocerca cerrada válida.</span>
+            }
+          </div>
+
+          <div class="form-assignments">
+            <label class="section-lbl">Vincular Unidades de Flota</label>
+            <div class="checkboxes-grid">
+              @for (vehicle of vehicles(); track vehicle.id; let i = $index) {
+                <div class="chk-row">
+                  <input type="checkbox" 
+                         [id]="'chk-' + vehicle.id" 
+                         [checked]="isVehicleAssigned(vehicle.id)"
+                         (change)="onVehicleToggle(vehicle.id, $event)">
+                  <label [for]="'chk-' + vehicle.id">{{ vehicle.name }} ({{ vehicle.plate }})</label>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="geofenceForm.invalid">
+              {{ isEditMode() ? 'Actualizar Geocerca' : 'Guardar Geocerca' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

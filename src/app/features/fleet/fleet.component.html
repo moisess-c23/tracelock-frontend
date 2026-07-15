@@ -1,0 +1,257 @@
+<div class="fleet-viewport">
+  <header class="section-banner">
+    <div class="banner-title">
+      <div class="page-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10M21 16v-3a4 4 0 00-4-4h-4M13 16h-6m8 0h3"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Gestión de Flota GPS</h2>
+        <p>Supervise dispositivos de rastreo activos, batería, ignición y telemetría de ruta.</p>
+      </div>
+    </div>
+    
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Registrar Unidad
+    </button>
+  </header>
+
+  <div class="filter-dashboard">
+    <div class="search-box-wrapper">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input type="text" 
+             placeholder="Buscar por placa, conductor, modelo..." 
+             class="input-control search-input"
+             [value]="searchQuery()"
+             (input)="updateSearch($event)">
+    </div>
+
+    <div class="filters-chips-bar">
+      <button class="chip" [class.active]="statusFilter() === null" (click)="statusFilter.set(null)">
+        Todos ({{ totalCount() }})
+      </button>
+      <button class="chip badge-in-route-h" [class.active]="statusFilter() === 'in_route'" (click)="statusFilter.set('in_route')">
+        <span class="dot"></span> En Ruta ({{ inRouteCount() }})
+      </button>
+      <button class="chip badge-idle-h" [class.active]="statusFilter() === 'idle'" (click)="statusFilter.set('idle')">
+        <span class="dot"></span> Ralentí ({{ idleCount() }})
+      </button>
+      <button class="chip badge-stopped-h" [class.active]="statusFilter() === 'stopped'" (click)="statusFilter.set('stopped')">
+        <span class="dot"></span> Detenido ({{ stoppedCount() }})
+      </button>
+      <button class="chip badge-maint-h" [class.active]="statusFilter() === 'maintenance'" (click)="statusFilter.set('maintenance')">
+        <span class="dot"></span> Taller ({{ maintenanceCount() }})
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container shadow-premium">
+    <table class="custom-table">
+      <thead>
+        <tr>
+          <th>Identificación / Vehículo</th>
+          <th>Matrícula Placa</th>
+          <th>Operador Conductor</th>
+          <th>Estatus Monitoreo</th>
+          <th>Velocidad Actual</th>
+          <th>Batería Localizador</th>
+          <th>Combustible</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (vehicle of filteredVehicles(); track vehicle.id) {
+          <tr>
+            <td>
+              <div class="vehicle-profile-cell">
+                <div class="vehicle-avatar-box">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10M21 16v-3a4 4 0 00-4-4h-4M13 16h-6m8 0h3m-8 0v-4h-4v4m4-4h4" />
+                  </svg>
+                </div>
+                <div class="profile-details">
+                  <strong>{{ vehicle.name }}</strong>
+                  <span>Odo: {{ vehicle.telemetry.odometer | number:'1.0-0' }} km</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="font-mono badge-plate">{{ vehicle.plate }}</span>
+            </td>
+            <td>
+              <span class="driver-name-text">{{ vehicle.driver }}</span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="'badge-' + vehicle.status">
+                <span class="bullet"></span>
+                {{ getStatusLabel(vehicle.status) }}
+              </span>
+            </td>
+            <td>
+              <span class="font-mono velocity-metric" [class.moving]="vehicle.speed > 0">
+                {{ vehicle.speed }} km/h
+              </span>
+            </td>
+            <td>
+              <div class="battery-meter-wrapper">
+                <div class="battery-gauge">
+                  <div class="battery-bar" 
+                       [ngClass]="getBatteryClass(vehicle.batteryPercent)" 
+                       [style.width.%]="vehicle.batteryPercent">
+                  </div>
+                </div>
+                <span class="battery-percent-lbl font-mono" [class.critical-flash]="vehicle.batteryPercent < 15">
+                  {{ vehicle.batteryPercent }}%
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="fuel-metric-cell">
+                <span class="font-mono">{{ vehicle.telemetry.fuel | number:'1.0-0' }}%</span>
+                <span class="temp-sub font-mono">{{ vehicle.telemetry.temp }}°C</span>
+              </div>
+            </td>
+            <td>
+              <div class="actions-group">
+                <button class="btn-action edit" (click)="openEditModal(vehicle)" title="Editar Parámetros">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+                <button class="btn-action delete" (click)="deleteVehicle(vehicle.id)" title="Dar de baja">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="empty-row">No se encontraron vehículos registrados en la flota.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (isModalOpen()) {
+    <div class="modal-backdrop">
+      <div class="modal-card" [class.modal-expanded]="isModalExpanded()">
+        <div class="modal-header">
+          <h3>{{ isEditMode() ? 'Editar Vehículo' : 'Registrar Vehículo GPS' }}</h3>
+          <div class="modal-header-actions">
+            <button class="btn-expand" (click)="toggleModalExpand()" [title]="isModalExpanded() ? 'Restaurar tamaño' : 'Pantalla completa'">
+              @if (isModalExpanded()) {
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15v4.5M15 15h4.5M15 15l5.25 5.25M9 15H4.5M9 15v4.5M9 15l-5.25 5.25"/></svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+              }
+            </button>
+            <button class="btn-close" (click)="closeModal()">&times;</button>
+          </div>
+        </div>
+        
+        <form [formGroup]="vehicleForm" (ngSubmit)="onSubmit()" class="modal-form-body">
+          <div class="form-group">
+            <label>Nombre / Modelo Unidad</label>
+            <input type="text" formControlName="name" class="input-control" placeholder="Ej: Freightliner Cascadia o Hilux 4x4">
+            @if (vehicleForm.get('name')?.touched && vehicleForm.get('name')?.invalid) {
+              <span class="error-msg">El nombre es requerido (mínimo 3 caracteres).</span>
+            }
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Número de Placa</label>
+              <input type="text" formControlName="plate" class="input-control font-mono" placeholder="Ej: TL-8942-D">
+              @if (vehicleForm.get('plate')?.touched && vehicleForm.get('plate')?.invalid) {
+                <span class="error-msg">Placa requerida (Ej: TL-XXXX-X).</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>Operador / Conductor Asignado</label>
+              <input type="text" formControlName="driver" class="input-control" placeholder="Nombre completo">
+              @if (vehicleForm.get('driver')?.touched && vehicleForm.get('driver')?.invalid) {
+                <span class="error-msg">Operador requerido.</span>
+              }
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Estatus de Inicio</label>
+              <select formControlName="statusId" class="input-control select-control">
+                <option value="" disabled>Seleccionar estado…</option>
+                @for (status of statuses(); track status.id) {
+                  <option [value]="status.id">{{ status.name }}</option>
+                }
+              </select>
+              @if (vehicleForm.get('statusId')?.touched && vehicleForm.get('statusId')?.invalid) {
+                <span class="error-msg">Debe seleccionar un estado operacional.</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>Odómetro de Carga (KM)</label>
+              <input type="number" formControlName="odometer" class="input-control font-mono" min="0">
+            </div>
+          </div>
+
+          <div class="coordinate-seeding-zone">
+            <h5>Coordenadas Iniciales de Transmisión</h5>
+            <p style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.5rem; line-height: 1.3;">
+              Haga clic en el mapa o arrastre el marcador para fijar las coordenadas geográficas de la unidad.
+            </p>
+            
+            <div id="picker-map" style="height: 220px; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; background: var(--bg-card); z-index: 5;"></div>
+            
+            <input type="hidden" formControlName="latitude">
+            <input type="hidden" formControlName="longitude">
+
+            <div class="form-grid" style="margin-top: 0.65rem;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.68rem; margin-bottom: 0.2rem;">Latitud fijada</label>
+                <div class="font-mono text-cyan" style="font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 0.4rem 0.6rem; border-radius: 4px; border: 1px solid var(--border-color);">
+                  {{ vehicleForm.get('latitude')?.value || '13.693000' }}
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.68rem; margin-bottom: 0.2rem;">Longitud fijada</label>
+                <div class="font-mono text-cyan" style="font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 0.4rem 0.6rem; border-radius: 4px; border: 1px solid var(--border-color);">
+                  {{ vehicleForm.get('longitude')?.value || '-89.213000' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Combustible (%)</label>
+              <input type="number" formControlName="fuel" class="input-control font-mono" min="0" max="100">
+            </div>
+            <div class="form-group">
+              <label>Batería Dispositivo (%)</label>
+              <input type="number" formControlName="battery" class="input-control font-mono" min="0" max="100">
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="vehicleForm.invalid">
+              {{ isEditMode() ? 'Guardar Cambios' : 'Registrar Vehículo' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

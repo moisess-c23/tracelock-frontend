@@ -1,0 +1,238 @@
+<div class="dashboard-viewport">
+
+  <section class="kpi-grid">
+
+    <div class="kpi-card kpi-total" (click)="filterStatus.set(null)" [class.active]="filterStatus() === null">
+      <div class="kpi-icon-box icon-blue">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10M21 16v-3a4 4 0 00-4-4h-4M13 16h-6m8 0h3" />
+        </svg>
+      </div>
+      <div class="kpi-data">
+        <div class="kpi-number">{{ totalVehicles() }}</div>
+        <span class="kpi-label">Total de Flota</span>
+        <span class="kpi-sub">Unidades registradas</span>
+      </div>
+      <div class="kpi-bar-track">
+        <div class="kpi-bar-fill fill-blue" style="width: 100%;"></div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-route" (click)="filterStatus.set('in_route')" [class.active]="filterStatus() === 'in_route'">
+      <div class="kpi-icon-box icon-teal">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
+      </div>
+      <div class="kpi-data">
+        <div class="kpi-number color-route">{{ inRoute() }}</div>
+        <span class="kpi-label">En Ruta Activa</span>
+        <span class="kpi-sub">Transmisión en vivo</span>
+      </div>
+      <div class="kpi-bar-track">
+        <div class="kpi-bar-fill fill-teal" [style.width.%]="totalVehicles() > 0 ? (inRoute() / totalVehicles()) * 100 : 0"></div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-stopped" (click)="filterStatus.set('stopped')" [class.active]="filterStatus() === 'stopped'">
+      <div class="kpi-icon-box icon-red">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div class="kpi-data">
+        <div class="kpi-number color-stopped">{{ stopped() }}</div>
+        <span class="kpi-label">Incidentes</span>
+        <span class="kpi-sub">Unidades detenidas</span>
+      </div>
+      <div class="kpi-bar-track">
+        <div class="kpi-bar-fill fill-red" [style.width.%]="totalVehicles() > 0 ? (stopped() / totalVehicles()) * 100 : 0"></div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-fence">
+      <div class="kpi-icon-box icon-purple">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      </div>
+      <div class="kpi-data">
+        <div class="kpi-number color-purple">{{ activeGeofences() }}</div>
+        <span class="kpi-label">Geocercas</span>
+        <span class="kpi-sub">Zonas de protección</span>
+      </div>
+      <div class="kpi-bar-track">
+        <div class="kpi-bar-fill fill-purple" style="width: 100%;"></div>
+      </div>
+    </div>
+
+  </section>
+
+  <div class="dashboard-body">
+
+    <div class="fleet-list-side" [class.collapsed]="!isFleetPanelOpen()">
+      <div class="side-header">
+        <div class="side-header-info">
+          <h3>Dispositivos GPS</h3>
+          <span class="pulse-counter">{{ filteredVehicles().length }} uds.</span>
+        </div>
+        <button class="collapse-btn" (click)="toggleFleetPanel()"
+          [title]="isFleetPanelOpen() ? 'Colapsar panel' : 'Ver dispositivos GPS'">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            class="chevron-icon" [class.rotated]="!isFleetPanelOpen()">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="fleet-panel-body">
+        <div class="search-wrap">
+          <input type="text" placeholder="Filtrar por nombre o placa..." class="input-control font-s"
+            (input)="updateSearch($event)">
+        </div>
+        <div class="fleet-list-scroll">
+          @for (vehicle of filteredVehicles(); track vehicle.id) {
+          <div class="vehicle-item-row" [class.selected]="selectedVehicle()?.id === vehicle.id"
+            (click)="selectVehicle(vehicle)">
+            <div class="item-indicators">
+              <span class="status-indicator-dot" [ngClass]="'dot-' + vehicle.status"></span>
+              <div class="vehicle-specs">
+                <span class="v-name">{{ vehicle.name }}</span>
+                <span class="v-plate">{{ vehicle.plate }} · {{ vehicle.driver }}</span>
+              </div>
+            </div>
+            <div class="item-metrics">
+              @if (vehicle.status === 'in_route') {
+              <span class="v-speed font-mono">{{ vehicle.speed }} km/h</span>
+              } @else {
+              <span class="badge font-mono badge-item" [ngClass]="'badge-' + vehicle.status">
+                {{ getStatusLabel(vehicle.status) }}
+              </span>
+              }
+            </div>
+          </div>
+          } @empty {
+          <div class="empty-list">Sin vehículos.</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="tracking-board">
+      <div class="board-header">
+        <div class="title-group">
+          <h3>Mapa de Monitoreo Georreferenciado</h3>
+          <p>Visualización vectorial de coordenadas en tiempo real</p>
+        </div>
+      </div>
+      <div class="map-wrapper" style="position: relative;">
+        <div id="dashboard-map" style="width: 100%; height: 100%; min-height: 480px; z-index: 1;"></div>
+      </div>
+      <div class="alerts-ticker">
+        <div class="ticker-label">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span>ÚLTIMOS SUCESOS</span>
+        </div>
+        <div class="ticker-content-box">
+          @if (latestAlert()) {
+          <div class="ticker-item animate-ticker" [ngClass]="'text-' + latestAlert()!.severity">
+            <span class="ticker-time">[{{ latestAlert()!.timestamp | date:'HH:mm:ss' }}]</span>
+            <span class="ticker-msg">{{ latestAlert()!.message }}</span>
+          </div>
+          } @else {
+          <span class="ticker-quiet">Sistemas operativos en orden. Sin alarmas pendientes.</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (selectedVehicle()) {
+    <div class="telemetry-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <h3>Telemetría en Vivo</h3>
+          <span class="driver-name">{{ selectedVehicle()!.driver }}</span>
+        </div>
+        <button class="btn-close" (click)="selectVehicle(null)">&times;</button>
+      </div>
+      <div class="panel-body">
+        <div class="tel-vehicle-identity">
+          <h4>{{ selectedVehicle()!.name }}</h4>
+          <div class="badge font-mono" [ngClass]="'badge-' + selectedVehicle()!.status">
+            <span class="bullet"></span>
+            {{ getStatusLabel(selectedVehicle()!.status) }}
+          </div>
+        </div>
+        <div class="gauge-section">
+          <div class="gauge-container">
+            <svg class="gauge-ring" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.03)" stroke-width="8" />
+              <circle cx="50" cy="50" r="40" fill="transparent"
+                [attr.stroke]="getStatusColor(selectedVehicle()!.status)" stroke-width="8" stroke-dasharray="251.2"
+                [attr.stroke-dashoffset]="getSpeedGaugeOffset(selectedVehicle()!.speed)" stroke-linecap="round" />
+            </svg>
+            <div class="gauge-text-center">
+              <span class="gauge-val font-mono">{{ selectedVehicle()!.speed }}</span>
+              <span class="gauge-unit">KM/H</span>
+            </div>
+          </div>
+          <p class="gauge-sublabel">Velocidad GPS</p>
+        </div>
+        <div class="dials-grid">
+          <div class="dial-stat">
+            <span class="dial-label">Combustible</span>
+            <span class="dial-value color-amber">{{ selectedVehicle()!.telemetry.fuel | number:'1.0-1' }}%</span>
+            <div class="dial-progress-bar">
+              <div class="fill bg-amber" [style.width.%]="selectedVehicle()!.telemetry.fuel"></div>
+            </div>
+          </div>
+          <div class="dial-stat">
+            <span class="dial-label">Batería Riel</span>
+            <span class="dial-value"
+              [ngClass]="selectedVehicle()!.batteryPercent < 20 ? 'color-stopped' : 'color-cyan'">{{
+              selectedVehicle()!.batteryPercent }}%</span>
+            <div class="dial-progress-bar">
+              <div class="fill" [ngClass]="selectedVehicle()!.batteryPercent < 20 ? 'bg-red' : 'bg-cyan'"
+                [style.width.%]="selectedVehicle()!.batteryPercent"></div>
+            </div>
+          </div>
+          <div class="dial-stat">
+            <span class="dial-label">Temp Motor</span>
+            <span class="dial-value" [class.color-stopped]="selectedVehicle()!.telemetry.temp > 95">{{
+              selectedVehicle()!.telemetry.temp }} °C</span>
+            <div class="dial-progress-bar">
+              <div class="fill" [class.bg-red]="selectedVehicle()!.telemetry.temp > 95"
+                [style.width.%]="(selectedVehicle()!.telemetry.temp / 130) * 100"></div>
+            </div>
+          </div>
+          <div class="dial-stat">
+            <span class="dial-label">Odómetro</span>
+            <span class="dial-value color-white font-mono">{{ selectedVehicle()!.telemetry.odometer | number:'1.1-2' }}
+              km</span>
+          </div>
+        </div>
+        <div class="telemetry-coordinates">
+          <h5>Coordenadas GPS</h5>
+          <div class="coords-box">
+            <div class="c-row"><span>LAT</span><span class="font-mono text-cyan">{{ selectedVehicle()!.latitude
+                }}</span></div>
+            <div class="c-row"><span>LNG</span><span class="font-mono text-cyan">{{ selectedVehicle()!.longitude
+                }}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+
+
+</div>

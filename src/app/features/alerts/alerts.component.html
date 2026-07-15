@@ -1,0 +1,159 @@
+<div class="alerts-viewport">
+  <header class="section-banner">
+    <div class="banner-title">
+      <div class="page-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <div>
+        <h2>Bitácora de Seguridad</h2>
+        <p>Registro de transgresiones de velocidad, geocercas y fallas técnicas en tiempo real.</p>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary btn-danger-hover" (click)="clearLogs()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+      Limpiar Bitácora
+    </button>
+  </header>
+
+  <section class="alert-stats-cards">
+    <div class="stat-card total-f" (click)="severityFilter.set(null)" [class.active]="severityFilter() === null">
+      <div class="stat-icon-box icon-blue">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="count-lbl">{{ totalAlertsCount() }}</span>
+        <div class="card-txt">
+          <strong>Total Alertas</strong>
+          <span>Eventos globales</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card critical-f" (click)="severityFilter.set('critical')" [class.active]="severityFilter() === 'critical'">
+      <div class="stat-icon-box icon-red">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="count-lbl text-red">{{ criticalCount() }}</span>
+        <div class="card-txt">
+          <strong>Críticos</strong>
+          <span>Atención inmediata</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card warning-f" (click)="severityFilter.set('warning')" [class.active]="severityFilter() === 'warning'">
+      <div class="stat-icon-box icon-amber">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="count-lbl text-amber">{{ warningCount() }}</span>
+        <div class="card-txt">
+          <strong>Advertencias</strong>
+          <span>Velocidad y geocercas</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card info-f" (click)="severityFilter.set('info')" [class.active]="severityFilter() === 'info'">
+      <div class="stat-icon-box icon-cyan">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="count-lbl text-cyan">{{ infoCount() }}</span>
+        <div class="card-txt">
+          <strong>Informativos</strong>
+          <span>Entradas/Salidas</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="audit-filters-bar">
+    <div class="search-box-wrapper">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input type="text" 
+             placeholder="Filtrar por texto de alerta, vehículo..." 
+             class="input-control search-input"
+             [value]="searchText()"
+             (input)="updateSearch($event)">
+    </div>
+
+    <div class="resolution-toggle">
+      <button class="btn btn-secondary" 
+              [class.active-btn]="hideResolved()"
+              (click)="hideResolved.set(!hideResolved())">
+        {{ hideResolved() ? 'Mostrar Resueltas' : 'Ocultar Resueltas' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="audit-timeline-feed">
+    @for (alert of filteredAlerts(); track alert.id) {
+      <div class="timeline-event-card"
+           [id]="'alert-' + alert.id"
+           [ngClass]="['severity-' + alert.severity, alert.resolved ? 'resolved-card' : '', (highlightId() === alert.id && highlightActive()) ? 'highlighted' : '']">
+        <div class="event-glow-indicator"></div>
+        
+        <div class="event-details-area">
+          <div class="event-meta-top">
+            <span class="badge-severity font-mono">{{ alert.severity }}</span>
+            <span class="event-timestamp font-mono">
+              {{ alert.timestamp | date:'dd MMM yyyy • HH:mm:ss' }}
+            </span>
+            @if (alert.resolved) {
+              <span class="badge-status-ok font-mono">RESUELTA</span>
+            }
+          </div>
+
+          <p class="event-message">{{ alert.message }}</p>
+
+          <div class="event-footer-details">
+            <span class="assoc-lbl">Foco de rastreo:</span>
+            <span class="font-mono node-link">{{ alert.vehicleName }}</span>
+            @if (alert.geofenceName) {
+              <span class="assoc-lbl gap-l">Zona:</span>
+              <span class="font-mono node-link">{{ alert.geofenceName }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="event-actions-area">
+          @if (!alert.resolved) {
+            <button class="btn btn-primary font-mono btn-ack" (click)="acknowledge(alert.id)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Marcar atendida
+            </button>
+          } @else {
+            <span class="ack-placeholder font-mono">Atendida</span>
+          }
+        </div>
+      </div>
+    } @empty {
+      <div class="empty-audit-state">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="empty-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h3>Sistemas e Infraestructura en Orden</h3>
+        <p>No hay alertas incidentales registradas en los filtros seleccionados.</p>
+      </div>
+    }
+  </div>
+</div>
